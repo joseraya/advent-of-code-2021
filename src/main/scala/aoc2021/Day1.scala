@@ -6,14 +6,6 @@ import cats.effect.IOApp
 import fs2.Pipe
 import fs2.io.file.Path
 
-/*
-The first order of business is to figure out how quickly the depth increases, just so you know what you're dealing with - you never know if the keys will get carried into deeper water by an ocean current or a fish or something.
-
-To do this, count the number of times a depth measurement increases from the previous measurement. (There is no measurement before the first measurement.) In the example above, the changes are as follows:
-
-
- */
-// count the number of times a depth measurement increases
 object Day1 extends IOApp.Simple {
 
   def readFile(resource: String) = fs2.io.file.Files[IO]
@@ -23,24 +15,28 @@ object Day1 extends IOApp.Simple {
     .filter(_.nonEmpty)
     .map(_.toInt)
 
-  def countIncreases: Pipe[IO, Int, Int] = _
+  val input = readFile("/day_1/input.txt")
+
+  def filterIncreases: Pipe[IO, Int, Int] = _
     .sliding(2)
-    .map(c => c(1) > c(0))
-    .fold(0){case (acc, v) => if (v) acc +1 else acc}
+    .filter(c => c(1) > c(0))
+    .map(_(1))
 
-  def puzzle1: IO[Unit] = readFile("/day_1/input.txt")
-    .through(countIncreases)
-    .evalTap(c => IO(println(c)))
+  //1475
+  def puzzle1: IO[Unit] = input
+    .through(filterIncreases)
     .compile
-    .drain
+    .count
+    .flatMap(IO.println)
 
-  def puzzle2: IO[Unit] = readFile("/day_1/input.txt")
+  //1516
+  def puzzle2: IO[Unit] = input
     .sliding(3)
-    .map(c => c.foldLeft(0){ case (acc, v) => acc + v})
-    .through(countIncreases)
-    .evalTap(c => IO(println(c)))
+    .map(c => c.toList.sum)
+    .through(filterIncreases)
     .compile
-    .drain
+    .count
+    .flatMap(IO.println)
 
-  def run: IO[Unit] = puzzle2
+  def run: IO[Unit] = puzzle1
 }
